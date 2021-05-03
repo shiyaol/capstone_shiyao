@@ -27,3 +27,10 @@ In this way, you can also simply make changes to the package when you need.
 from PeyeTracking.data_preprocess import pre_process
 from PeyeTracking.fixation_classification import fixation_detection, visualize_fixation, get_speed
 ```
+## Launch the Dashboard
+### Requirements for raw gaze data and screen recording video:
+* This version only supports raw gaze data from Tobii eye tracker, here is an example:
+
+### Run the dashboard on local server
+* In IDE: Simply run [app.py](https://github.com/shiyaol/capstone_shiyao/blob/main/gaze_app/app.py), the local server address(http://127.0.0.1:8050/) will show in the output.
+
