@@ -39,7 +39,7 @@ $ffmpeg -i movie_13.mp4 -r 25 -y 13_movie.mp4
 ```
 
 ### Run the dashboard on local server
-* In IDE: Simply run [app.py](https://github.com/shiyaol/capstone_shiyao/blob/main/gaze_app/app.py), the local server address(http://127.0.0.1:8050/) will show in the output.
+* In IDE: Simply run [app.py](https://github.com/shiyaol/capstone_shiyao/blob/main/gaze_app/app.py), the dashboard will be lauched on the local server address(http://127.0.0.1:8050/).
 
 ### The frame and video folder:
 * The [frames](https://github.com/shiyaol/capstone_shiyao/tree/main/gaze_app/frames) folder will store your generated frames. Everytime you rerun the dashboard, images under this folder will be deleted automatically.
