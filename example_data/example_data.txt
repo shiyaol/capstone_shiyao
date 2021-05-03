@@ -1,0 +1,3 @@
+GazeX 	787.8 	GazeY 	462.3 	Timestamp 	1669105761 	diff 	13
+EyePosLeftX 	-50.3 	EyePosLeftY 	185.3 	EyePosLeftZ 	499.4 	EyePosRightX 	10.1 	EyePosRightY 	186.4 	EyePosRightZ 	501.2 	EyePosNLeftX 	0.6 	EyePosNLeftY 	0.2 	EyePosNLeftZ 	0.3 	EyePosNRightX 	0.5 	EyePosNRightY 	0.2 	EyePosNRightZ 	0.3 	timestamp  	1669105755
+GazeX 	771.1 	GazeY 	452.3 	Timestamp 	1669105772 	diff 	11
