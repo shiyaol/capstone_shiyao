@@ -1,4 +1,6 @@
-import collections
+# This is the code of the dashboard part
+#Import the libraries
+
 import math
 import glob
 import dash
@@ -8,35 +10,46 @@ import numpy as np
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import dash_table
-import plotly.express as px
 import PeyeTracking
 import pandas as pd
-import datetime
-import scipy
 import flask
 from os import path
-import base64
 from PeyeTracking.data_preprocess import pre_process
 import os, shutil
-from PeyeTracking.data_preprocess import test
 from PeyeTracking.fixation_classification import fixation_detection, visualize_fixation, get_speed
-raw_file = 'file'
 import cv2
 import moviepy.editor as moviepy
 import time
 
+raw_file = 'file'
+
+#Load the stylesheet
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
+#Set the path that will store the frames and video
 image_directory = '/Users/shiyaoli/2019Vanderbilt/FinalS/Capstone/gaze_app/frames/'
 video_directory = '/Users/shiyaoli/2019Vanderbilt/FinalS/Capstone/gaze_app/'
+
+# Set image list and static path(will be used later)
 list_of_images = [os.path.basename(x) for x in glob.glob('{}*.png'.format(image_directory))]
 static_image_route = '/static/'
+
+#Set your color for fixation circles
 color_1 = (0, 255, 0)
 color_2 = (255, 0, 0)
 color_3 = (0, 0, 255)
 color_4 = (255, 255, 255)
 color_5 = (100, 100, 100)
+
+#Initialize the dashboard
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
+# Hide the exceptions from website
 app.config.suppress_callback_exceptions = True
+
+# Arrange the layout
+
+#Create the data upload component
 app.layout = html.Div([
     html.H2(children='Upload your raw gaze data file here', id='title',style={'background-image': 'url(https://immersed.io/wp-content/uploads/2017/06/11-e1498743729956.jpg)',
                                                                               'color': 'white'}),
@@ -73,6 +86,8 @@ app.layout = html.Div([
     dcc.Input(id="end_time", type="number", placeholder="", debounce=True),
     html.Button('Visualize gaze speed', id='visual_data', n_clicks=0),
     html.Br(),
+
+    #Linechart y variable selection
     html.Div([
         dcc.Dropdown(
             id='line_chart_dropdown',
@@ -86,6 +101,8 @@ app.layout = html.Div([
             placeholder='Please select the variable you\'d like to visualize here ',
         ),
         ],style={"width": "48%", 'display': 'inline-block'},),
+
+    #Linechart fixation method selection
     html.Div([
         dcc.Dropdown(
             id='fixation_dropdown',
@@ -100,9 +117,13 @@ app.layout = html.Div([
             placeholder='Please select the fixation identification methods here ',
         ),
         ],style={"width": "48%", 'display': 'inline-block', 'float': 'right'},),
+
+    #Threshold for the selected fixation method
     dcc.Input(id="threshold", type="number", placeholder="Please enter the threshold here", debounce=True),
     html.Button('Visualize fixations', id='visual_fix', n_clicks=0),
     html.Div(id='dd-output-container'),
+
+    #Show the gaze data on dashboard
     dash_table.DataTable(
             id='gaze_table',
             columns=[{"name": 'x_coordinate', "id": 'x_coordinate'},
@@ -118,6 +139,8 @@ app.layout = html.Div([
     dcc.Input(id="end_frame", type="number", placeholder="", debounce=True),
     html.Br(),
     html.I("Please input the fixation classification method for generating video and frames:", style={'padding': 10}),
+
+    #Fixation method for generating video and frames selection
     dcc.Checklist(
         id = "fix_method",
         options=[
@@ -128,18 +151,26 @@ app.layout = html.Div([
         ],
         value=['']
     ),
+
+    #Instruction for color and fixation methods
     html.I("Green for original gaze points, blue for frequency method, red for speed method, white for centroid method, gray for Salvucci method.", style={'padding': 10}),
     html.Br(),
     dcc.Input(id="sp_thres", type="number", placeholder="Speed threshold"),
     dcc.Input(id="dis_thres", type="number", placeholder="Distance threshold"),
     dcc.Input(id="sav_thres", type="number", placeholder="Salvucci threshold"),
     html.Button('Get video and all the frames', id='get_frame', n_clicks=0),
+
+    #The html video component for playing generated video
     html.Video(id = 'video', src= static_image_route + 'movie_18_2nd.mp4', controls=True),
+
+    #Selecting the image based on a given timestamp
     dcc.Dropdown(
         id='image_dropdown',
         options=[],
         value='Select the image'
     ),
+
+    #The html video component for showing generated frames
     html.Img(id = 'image', src = static_image_route + '6283.png')
 
 
@@ -149,7 +180,7 @@ def set_filename(raw_file_input):
     raw_file = raw_file_input
 
 
-
+#Showing file name after uploading
 @app.callback(Output('file_info', 'children'),
               Input('upload_raw', 'filename'),)
 def update_file(filename):
@@ -159,7 +190,7 @@ def update_file(filename):
         return 'You have uploaded this raw gaze data file: ' + str(filename[0])
 
 
-
+#Informing if the data has been preprocessed succeesfully and also provide the session length
 @app.callback(
     [Output('container-buttons', 'children'),
      Output('data', 'data'),
@@ -175,6 +206,7 @@ def update_process(n_clicks, filename):
     else:
         return '', [], 0, 0
 
+#The button which shows the data
 @app.callback(
     Output('gaze_table', 'data'),
     Input('view_data', 'n_clicks'),
@@ -184,7 +216,7 @@ def show_data(button, children):
         children = []
     return children
 
-
+#Interactive linechart with fixation identification method selection
 @app.callback(
     Output('graph_container', 'children'),
     [Input('visual_data', 'n_clicks'),
@@ -204,8 +236,6 @@ def show_data(button, drop_title, fix_method, fix_butt, threshold, start, end, c
     fig.add_trace(
         go.Scatter(x = filtered_data['timestamp'], y = filtered_data[drop_title], mode = 'lines', showlegend=False)
     )
-    #print(fix_butt, count)
-    #fig = px.line(filtered_data, x='timestamp', y=drop_title)
     fixation_bnd = []
     fixation_detection(gaze_data = "../out_sample.txt", sort_fix = "./fixation_sample.txt", fix_intervals = "./fixation_intervals.txt", method = fix_method, threshold = threshold)
     if path.exists("./fixation_intervals.txt"):
@@ -222,26 +252,10 @@ def show_data(button, drop_title, fix_method, fix_butt, threshold, start, end, c
                     fig.add_trace(go.Scatter(x=[s, e], y = [150000, 150000], fill='tozeroy',
                                              mode='none', fillcolor='pink', opacity=0.1, showlegend=False  # override default markers+lines
                                              ))
-                    #fixation_bnd.append([s, e])
                 line = fix.readline()
-        #fixation_bnd  = list(set(fixation_bnd))
-        #for pair in fixation_bnd:
-            # if pair[1] - pair[0] > 0:
-            #     fig.add_shape(type="rect",
-            #                   x0=pair[0], y0=0, x1=pair[1], y1 = 20000,
-            #                   line=dict(color="LightSeaGreen"),
-            #                   fillcolor = "PaleTurquoise",
-            #                   opacity = 0.35
-            #                   )
         os.remove("./fixation_intervals.txt")
-                #rect = plt.Rectangle((pair[0], 0.1), pair[1] - pair[0], 50000, color='y')
-
-
-    #fig.add_vrect(x0=200, x1=400,fillcolor="green", opacity=0.25, line_width=0)
     if button > 0:
         children = []
-        #fig = px.line(filtered_data, x='timestamp', y='speed'),
-        #fig.update_yaxes(title=drop_title, type='linear'),
         children.append(
             dcc.Graph(
                 figure = fig
@@ -252,7 +266,7 @@ def show_data(button, drop_title, fix_method, fix_butt, threshold, start, end, c
     return children
 
 
-
+# Generating video and frames for a given time window
 @app.callback(
     [Output('image_dropdown', 'options'),
      Output('video', 'src')],
@@ -377,7 +391,7 @@ def arrange_frames(n_clicks, options, start, end, ck_value, sp_thres, dis_thres,
     clip.write_videofile(p_name)
     return [{'label': i, 'value': i} for i in sorted(options)], static_image_route + p_name
 
-
+#Showing the image based on specific timestamp from the timewindow
 @app.callback(
     dash.dependencies.Output('image', 'src'),
     [dash.dependencies.Input('image_dropdown', 'value'),
@@ -388,20 +402,9 @@ def update_image_src(value, data):
     gaze_data = gaze_data.astype({'time_stamp': 'str'})
     if value != 'Select the image':
         img_num = math.ceil(((float(value) - 56.5) * 1000) / 40)
-        # if str(value) in gaze_data.time_stamp.values:
-        #     print(3)
-        #     x = gaze_data[gaze_data['time_stamp'] == str(value)]["x_coordinate"].values[0]
-        #     y = gaze_data[gaze_data['time_stamp'] == str(value)]["y_coordinate"].values[0]
-        #     gaze_x = float(x) * (1092 / 1600)
-        #     gaze_y = float(y) * (614 / 900)
-        #     img = cv2.imread('./frames/' + str(img_num) + '.png')
-        #     print(img.shape)
-        #     cv2.circle(img, (int(gaze_x), int(gaze_y)), 15, color, 2)
-        #     cv2.imwrite('./frames/' + str(img_num) +str(value*1000)+'.png', img)
-        #     return static_image_route + str(img_num) +str(value*1000)+'.png'
         return static_image_route + str(img_num)+'.png'
 
-
+#Remove all files from a given folder
 def clear_dir(dir):
     folder = dir
     for filename in os.listdir(folder):
@@ -414,17 +417,15 @@ def clear_dir(dir):
         except Exception as e:
             print('Failed to delete %s. Reason: %s' % (file_path, e))
 
-
+#Server setting which enables local image serving
 @app.server.route('{}<image_path>.png'.format(static_image_route))
 def serve_image(image_path):
     print(image_path)
-    #list_of_images = [os.path.basename(x) for x in glob.glob('{}*.png'.format(image_directory))]
     image_name = '{}.png'.format(image_path)
     print(image_name)
-    #if image_name not in list_of_images:
-        #raise Exception('"{}" is excluded from the allowed static files'.format(image_path))
     return flask.send_from_directory(image_directory, image_name)
 
+#Server setting which enables local video serving
 @app.server.route('{}<video_path>.mp4'.format(static_image_route))
 def serve_static(video_path):
     print(video_path)
@@ -432,13 +433,9 @@ def serve_static(video_path):
     print(video_name)
     return flask.send_from_directory(video_directory, video_name)
 
+#Run the dashboard on local server
 app.run_server(debug=True, use_reloader=False)
 
 
-# @app.callback(
-#     dash.dependencies.Output('video', 'src'),
-#     [dash.dependencies.Input('image_dropdown', 'value'),
-#      dash.dependencies.Input('data', 'data')])
-# def update_video_src(value, data):
-#     return static_image_route + 'movie_18_2nd.mp4'
+
 

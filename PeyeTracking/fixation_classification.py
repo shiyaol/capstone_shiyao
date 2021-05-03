@@ -1,3 +1,5 @@
+#This file contains four fixation identification methods, as well as a function to visualize the fixations
+
 import os
 import math
 import matplotlib.pyplot as plt
@@ -5,6 +7,8 @@ from scipy.spatial import distance
 import pandas as pd
 
 def fixation_detection(gaze_data , sort_fix, fix_intervals, threshold = 0, method = 'frequency'):
+
+    #Identifying fixations by eyetrackers frequency, wuthin a valid fixation, the timestamp difference from two sequential points shouldn't be longer than 15 miliseconds
     if method == 'frequency':
         with open(sort_fix) as data: 
             with open(fix_intervals, 'w') as fix_int:
@@ -51,6 +55,8 @@ def fixation_detection(gaze_data , sort_fix, fix_intervals, threshold = 0, metho
                         nextLine = data.readline()
                     # else:
                     #     break
+
+    # Speed based method, in a Gaze points whose velocity is faster than a threshold will be considered as saccades, the others will be considered as fixations
     if method == "speed":
         with open("./speed.txt", 'w') as output:
             with open(gaze_data) as data: 
@@ -106,6 +112,7 @@ def fixation_detection(gaze_data , sort_fix, fix_intervals, threshold = 0, metho
                     line = speed.readline()
                     new_start = True
 
+    #Within a valid fixation, gaze points should not be further than a threshold from the centroid.
     if method == "distance":
         from scipy.spatial import distance
         with open(gaze_data) as gaze, open(fix_intervals, "w") as fix, open("ds_rec.csv", "w") as fix_rec:
@@ -141,6 +148,7 @@ def fixation_detection(gaze_data , sort_fix, fix_intervals, threshold = 0, metho
                     #print(line)
                     new_start = True
 
+    #In valid fixations, the maximal distance plus maximal vertical distance less than given threshold.
     if method == "salvucci":
         with open(gaze_data) as gaze, open(fix_intervals, "w") as fix, open("sv_rec.csv", "w") as fix_rec:
             fix_rec.write("fix_time" + "\n")
@@ -181,7 +189,7 @@ def fixation_detection(gaze_data , sort_fix, fix_intervals, threshold = 0, metho
 
 
 
-
+# Calculate the eye gaze speed for each timestamp and save the result as a separate file
 def get_speed(gaze_data):
     with open("./speed.txt", 'w') as output:
         with open(gaze_data) as data:
@@ -214,7 +222,7 @@ def get_speed(gaze_data):
 
     
         
-
+# Use this function in jupyternotebook. Could visualize the gaze speed within any timewindow with fixation intervals as a line chart.
 def visualize_fixation(gaze_data, fix_intervals, start_timestamp, end_timestamp):
     fixation_bnd = []
     tm = []

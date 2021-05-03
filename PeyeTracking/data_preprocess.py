@@ -1,19 +1,24 @@
+# This file is the data preprocessing function
+
 import os
 import pandas as pd
 
 def pre_process(raw_data, gaze_out, fixation_out, observe = False):
     """Preprocess the raw gaze data from Tobii eye-tracker"""
+
+    #Get the start timestamp of whole session
     with open(raw_data) as data:
             line = data.readline()
             l = line.strip("\n").split("\t")
             while line != "":
                 if l[0] == "EyePosLeftX " and len(l) == 26:
                     time_start = int(l[l.index("timestamp  ") +1])
-                    #print(time_start)
                     data.close()
                     break
                 line = data.readline()
                 l = line.strip("\n").split("\t")
+
+    #Only keep gaze x and y coordinates
     with open(raw_data) as data:
         with open("./gaze_temp.txt", 'w') as out, open("./fix_temp.txt", 'w') as fix:
             line = data.readline()
@@ -44,6 +49,8 @@ def pre_process(raw_data, gaze_out, fixation_out, observe = False):
                 line = data.readline()
     gaze_vec = {}
     fix_vec = {}
+
+    # Create a new file for processed data and replace na data with "loss", save fixation points from eyetracker and normal coordinates into two files
     with open(gaze_out,'w') as output_gaze, open(fixation_out, 'w') as output_fixation:
         output_gaze.write("x_coordinate"+"\t"+"y_coordinate"+"\t"+"time_stamp"+"\n")
         output_fixation.write("x_coordinate"+"\t"+"y_coordinate"+"\t"+"time_stamp"+"\n")
