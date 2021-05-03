@@ -12,3 +12,18 @@ In this project, I created:
   * Eye gaze speed visualization with identified fixations
   * Fixation annotation on experiment screen recording video
   * Experiment screen recording video frame inspection with identified fixations
+
+## Install PeyeTracking package locally
+
+```
+$cd capstone_shiyao
+$pip install -e PeyeTracking
+```
+
+In this way, you can also simply make changes to the package when you need.
+
+### Import functions in PeyeTracking
+```
+from PeyeTracking.data_preprocess import pre_process
+from PeyeTracking.fixation_classification import fixation_detection, visualize_fixation, get_speed
+```
